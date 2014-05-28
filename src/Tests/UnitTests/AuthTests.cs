@@ -42,11 +42,7 @@ namespace UnitTests
         public virtual void Configure(Container container)
         {
         }
-
-        private static void FailOnAsyncError<T>(T response, Exception ex)
-        {
-            Assert.Fail(ex.Message);
-        }
+      
 
         IServiceClient GetClient()
         {
@@ -720,6 +716,13 @@ namespace UnitTests
         [TestCase(ExpectedException = typeof(AuthenticationException), ExpectedMessage = "Authentication header not supported: Negotiate,NTLM")]
         public void Meaningful_Exception_for_Unknown_Auth_Header()
         {
+
+            //http://dotnetinside.com/en/type/ServiceStack.Client/AuthenticationInfo/4.0.20.0
+            //http://en.wikipedia.org/wiki/Basic_access_authentication
+
+            var good = new AuthenticationInfo("Basic realm=registrar");
+            Assert.IsNotNull(good);
+        
             // ReSharper disable once UnusedVariable - this assignment will thrown an error
             var authInfo = new AuthenticationInfo("Negotiate,NTLM");
         }

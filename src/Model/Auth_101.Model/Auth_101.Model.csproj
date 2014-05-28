@@ -124,7 +124,6 @@
     <Compile Include="Requests\SecuredFileUploadRequest.cs" />
     <Compile Include="Requests\SecuredRequest.cs" />
     <Compile Include="Requests\SecuredResponse.cs" />
-    <Compile Include="Validators\CustomerValidator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
