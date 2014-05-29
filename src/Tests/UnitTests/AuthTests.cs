@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -13,17 +12,28 @@ using Funq;
 using NUnit.Framework;
 using ServiceStack;
 using ServiceStack.Auth;
-using ServiceStack.Text;
+using ServiceStack.Text; 
 
 namespace UnitTests
 {
     public class AuthTests
     {
-        protected virtual string VirtualDirectory { get { return ""; } }
-        protected virtual string ListeningOn { get { return "http://localhost:1337/"; } }
-        protected virtual string WebHostUrl { get { return "http://mydomain.com"; } }
-   
-        AuthAppHostHttpListener _appHost;
+        protected virtual string VirtualDirectory
+        {
+            get { return ""; }
+        }
+
+        protected virtual string ListeningOn
+        {
+            get { return "http://localhost:1337/"; }
+        }
+
+        protected virtual string WebHostUrl
+        {
+            get { return "http://mydomain.com"; }
+        }
+
+        private AuthAppHostHttpListener _appHost;
 
         [TestFixtureSetUp]
         public void OnTestFixtureSetUp()
@@ -42,19 +52,19 @@ namespace UnitTests
         public virtual void Configure(Container container)
         {
         }
-      
 
-        IServiceClient GetClient()
+
+        private IServiceClient GetClient()
         {
             return new JsonServiceClient(ListeningOn);
         }
 
-        IServiceClient GetHtmlClient()
+        private IServiceClient GetHtmlClient()
         {
-            return new HtmlServiceClient(ListeningOn) { BaseUri = ListeningOn };
+            return new HtmlServiceClient(ListeningOn) {BaseUri = ListeningOn};
         }
 
-        IServiceClient GetClientWithUserPassword()
+        private IServiceClient GetClientWithUserPassword()
         {
             return new JsonServiceClient(ListeningOn)
             {
@@ -64,65 +74,55 @@ namespace UnitTests
         }
 
         [Test]
-        public void No_Credentials_throws_UnAuthorized()
+        public void no_credentials_throws_unauthorized()
         {
-            try
-            {
-                var client = GetClient();
-                var request = new SecuredRequest { Name = "test" };
-                var response = client.Send<SecuredResponse>(request);
+            var client = GetClient();
+            var request = new SecuredRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<SecuredResponse>(request));
 
-                Assert.Fail("Shouldn't be allowed");
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
         public void Authenticate_attribute_respects_provider()
         {
-            try
+            var client = GetClient();
+            var authResponse = client.Send(new Authenticate
             {
-                var client = GetClient();
-                var authResponse = client.Send(new Authenticate
-                {
-                    provider = CredentialsAuthProvider.Name,
-                    UserName = "user",
-                    Password = "p@55word",
-                    RememberMe = true,
-                });
+                provider = CredentialsAuthProvider.Name,
+                UserName = "user",
+                Password = "p@55word",
+                RememberMe = true,
+            });
 
-                var request = new RequiresCustomAuthRequest { Name = "test" };
-                var response = client.Send<RequiresCustomAuthResponse>(request);
+            Assert.IsNull(authResponse.ResponseStatus.Errors);
+            Assert.IsNull(authResponse.ResponseStatus.ErrorCode);
+            Assert.IsFalse(authResponse.ResponseStatus.IsErrorResponse());
 
-                Assert.Fail("Shouldn't be allowed");
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+
+            var request = new RequiresCustomAuthRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresCustomAuthResponse>(request));
+
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
         public void PostFile_with_no_Credentials_throws_UnAuthorized()
         {
-            try
-            {
-                var client = GetClient();
-                var uploadFile = new FileInfo("~/TestExistingDir/upload.html".MapProjectPath());
-                client.PostFile<SecuredFileUploadResponse>(ListeningOn + "/SecuredFileUploadRequest", uploadFile, MimeTypes.GetMimeType(uploadFile.Name));
+            var client = GetClient();
+            var uploadFile = new FileInfo("~/TestExistingDir/upload.html".MapProjectPath());
+            var error = Assert.Throws<WebServiceException>(() =>
+                client.PostFile<SecuredFileUploadResponse>(ListeningOn + "/SecuredFileUploadRequest", uploadFile, MimeTypes.GetMimeType(uploadFile.Name)));
 
-                Assert.Fail("Shouldn't be allowed");
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace UnitTests
         public void PostFileWithRequest_does_work_with_BasicAuth()
         {
             var client = GetClientWithUserPassword();
-            var request = new SecuredFileUploadRequest { CustomerId = 123, CustomerName = "Foo" };
+            var request = new SecuredFileUploadRequest {CustomerId = 123, CustomerName = "Foo"};
             var uploadFile = new FileInfo("~/TestExistingDir/upload.html".MapProjectPath());
 
             var expectedContents = new StreamReader(uploadFile.OpenRead()).ReadToEnd();
@@ -155,82 +155,64 @@ namespace UnitTests
         }
 
         [Test]
-        public void Does_work_with_BasicAuth()
+        public void does_work_with_BasicAuth()
         {
-            try
-            {
-                var client = GetClientWithUserPassword();
-                var request = new SecuredRequest { Name = "test" };
-                var response = client.Send<SecuredResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Name));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            var client = GetClientWithUserPassword();
+            var request = new SecuredRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<SecuredResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.Name));
         }
 
         [Test]
-        public void Does_always_send_BasicAuth()
+        public void does_always_send_BasicAuth()
         {
-            try
+            var client = (ServiceClientBase) GetClientWithUserPassword();
+            client.AlwaysSendBasicAuthHeader = true;
+            client.RequestFilter = req =>
             {
-                var client = (ServiceClientBase)GetClientWithUserPassword();
-                client.AlwaysSendBasicAuthHeader = true;
-                client.RequestFilter = req =>
+                bool hasAuthentication = false;
+                foreach (var key in req.Headers.Keys)
                 {
-                    bool hasAuthentication = false;
-                    foreach (var key in req.Headers.Keys)
-                    {
-                        if (key.ToString() == "Authorization")
-                            hasAuthentication = true;
-                    }
-                    Assert.IsTrue(hasAuthentication);
-                };
+                    if (key.ToString() == "Authorization")
+                        hasAuthentication = true;
+                }
+                Assert.IsTrue(hasAuthentication);
+            };
 
-                var request = new SecuredRequest { Name = "test" };
-                var response = client.Send<SecuredResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Name));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            var request = new SecuredRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<SecuredResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.Name));
         }
 
         [Test]
-        public void Does_work_with_CredentailsAuth()
-        {
-            try
-            {
-                var client = GetClient();
-
-                var authResponse = client.Send(new Authenticate
-                {
-                    provider = CredentialsAuthProvider.Name,
-                    UserName = "user",
-                    Password = "p@55word",
-                    RememberMe = true,
-                });
-
-                authResponse.PrintDump();
-
-                var request = new SecuredRequest { Name = "test" };
-                var response = client.Send<SecuredResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Name));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
-        }
-
-        [Test]
-        public async Task Does_work_with_CredentailsAuth_Async()
+        public void does_work_with_CredentailsAuth()
         {
             var client = GetClient();
 
-            var request = new SecuredRequest { Name = "test" };
+            var authResponse = client.Send(new Authenticate
+            {
+                provider = CredentialsAuthProvider.Name,
+                UserName = "user",
+                Password = "p@55word",
+                RememberMe = true,
+            });
+
+            authResponse.PrintDump();
+
+            var request = new SecuredRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<SecuredResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.Name));
+        }
+
+        [Test]
+        public async Task does_work_with_CredentailsAuth_Async()
+        {
+            var client = GetClient();
+
+            var request = new SecuredRequest {Name = "test"};
             var authResponse = await client.SendAsync<AuthenticateResponse>(
                 new Authenticate
                 {
@@ -248,188 +230,142 @@ namespace UnitTests
         }
 
         [Test]
-        public void Can_call_RequiredRole_service_with_BasicAuth()
+        public void can_call_RequiredRole_service_with_BasicAuth()
         {
-            try
-            {
-                var client = GetClientWithUserPassword();
-                var request = new RequiresRoleRequest { Name = "test" };
-                var response = client.Send<RequiresRoleResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Name));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            var client = GetClientWithUserPassword();
+            var request = new RequiresRoleRequest {RequestData = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<RequiresRoleResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
         public void RequiredRole_service_returns_unauthorized_if_no_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                var request = new RequiresRoleRequest { Name = "test" };
-                var response = client.Send<RequiresRoleResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            var client = GetClient();
+            var request = new RequiresRoleRequest {RequestData = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresRoleResponse>(request));
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
         public void RequiredRole_service_returns_forbidden_if_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                ((ServiceClientBase)client).UserName = SystemConstants.EmailBasedUsername;
-                ((ServiceClientBase)client).Password = SystemConstants.PasswordForEmailBasedAccount;
+            var client = GetClient();
+            ((ServiceClientBase) client).UserName = SystemConstants.EmailBasedUsername;
+            ((ServiceClientBase) client).Password = SystemConstants.PasswordForEmailBasedAccount;
 
-                var request = new RequiresRoleRequest { Name = "test" };
-                var response = client.Send<RequiresRoleResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Forbidden));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            var request = new RequiresRoleRequest {RequestData = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresRoleResponse>(request));
+            Assert.AreEqual((int) HttpStatusCode.Forbidden, error.StatusCode);
+            Assert.AreEqual("Invalid Role", error.StatusDescription);
+            Assert.AreEqual("Invalid Role", error.ErrorCode);
         }
 
         [Test]
-        public void Can_call_RequiredPermission_service_with_BasicAuth()
+        public void can_call_RequiredPermission_service_with_BasicAuth()
         {
-            try
-            {
-                var client = GetClientWithUserPassword();
-                var request = new RequiresPermissionRequest { Name = "test" };
-                var response = client.Send<RequiresPermissionResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Name));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            var client = GetClientWithUserPassword();
+            var request = new RequiresPermissionRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<RequiresPermissionResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.Name));
         }
 
         [Test]
         public void RequiredPermission_service_returns_unauthorized_if_no_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                var request = new RequiresPermissionRequest { Name = "test" };
-                var response = client.Send<RequiresPermissionResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            var client = GetClient();
+            var request = new RequiresPermissionRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresPermissionResponse>(request));
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
         public void RequiredPermission_service_returns_forbidden_if_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                ((ServiceClientBase)client).UserName = SystemConstants.EmailBasedUsername;
-                ((ServiceClientBase)client).Password = SystemConstants.PasswordForEmailBasedAccount;
+            var client = GetClient();
+            ((ServiceClientBase) client).UserName = SystemConstants.EmailBasedUsername;
+            ((ServiceClientBase) client).Password = SystemConstants.PasswordForEmailBasedAccount;
 
-                var request = new RequiresPermissionRequest { Name = "test" };
-                var response = client.Send<RequiresPermissionResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
+            var request = new RequiresPermissionRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresPermissionResponse>(request));
+
+            Assert.AreEqual((int) HttpStatusCode.Forbidden, error.StatusCode);
+            Assert.AreEqual("Invalid Permission", error.StatusDescription);
+            Assert.AreEqual("Invalid Permission", error.ErrorCode);
+        }
+
+        [Test]
+        public void does_work_with_CredentailsAuth_Multiple_Times()
+        {
+            var client = GetClient();
+
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var authResponse = client.Send<AuthenticateResponse>(new Authenticate
             {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Forbidden));
-                Console.WriteLine(webEx.ResponseDto.Dump());
+                provider = CredentialsAuthProvider.Name,
+                UserName = "user",
+                Password = "p@55word",
+                RememberMe = true,
+            });
+
+            Console.WriteLine(authResponse.Dump());
+
+            for (int i = 0; i < 500; i++)
+            {
+                var request = new SecuredRequest {Name = "test"};
+                // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+                var response = client.Send<SecuredResponse>(request);
+                Assert.That(response.Result, Is.EqualTo(request.Name));
+                Console.WriteLine("loop : {0}", i);
             }
         }
 
         [Test]
-        public void Does_work_with_CredentailsAuth_Multiple_Times()
+        public void exceptions_thrown_are_received_by_client_when_AlwaysSendBasicAuthHeader_is_false()
         {
-            try
-            {
-                var client = GetClient();
+            var client = (IRestClient) GetClientWithUserPassword();
+            ((ServiceClientBase) client).AlwaysSendBasicAuthHeader = false;
+            var error = Assert.Throws<WebServiceException>(() => client.Get<SecuredResponse>("/SecuredRequest"));
 
-                var authResponse = client.Send<AuthenticateResponse>(new Authenticate
-                {
-                    provider = CredentialsAuthProvider.Name,
-                    UserName = "user",
-                    Password = "p@55word",
-                    RememberMe = true,
-                });
-
-                Console.WriteLine(authResponse.Dump());
-
-                for (int i = 0; i < 500; i++)
-                {
-                    var request = new SecuredRequest { Name = "test" };
-                    var response = client.Send<SecuredResponse>(request);
-                    Assert.That(response.Result, Is.EqualTo(request.Name));
-                    Console.WriteLine("loop : {0}", i);
-                }
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            Assert.AreEqual("unicorn nuggets", error.ErrorMessage);
+            Assert.AreEqual((int) HttpStatusCode.BadRequest, error.StatusCode);
+            Assert.AreEqual("ArgumentException", error.StatusDescription);
+            Assert.AreEqual("ArgumentException", error.ErrorCode);
         }
 
         [Test]
-        public void Exceptions_thrown_are_received_by_client_when_AlwaysSendBasicAuthHeader_is_false()
+        public void exceptions_thrown_are_received_by_client_when_AlwaysSendBasicAuthHeader_is_true()
         {
-            try
-            {
-                var client = (IRestClient)GetClientWithUserPassword();
-                ((ServiceClientBase)client).AlwaysSendBasicAuthHeader = false;
-                var response = client.Get<SecuredResponse>("/SecuredRequest");
+            var client = (IRestClient) GetClientWithUserPassword();
+            ((ServiceClientBase) client).AlwaysSendBasicAuthHeader = true;
+            var error = Assert.Throws<WebServiceException>(() => client.Get<SecuredResponse>("/SecuredRequest"));
 
-                Assert.Fail("Should have thrown");
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.ErrorMessage, Is.EqualTo("unicorn nuggets"));
-            }
+            Assert.AreEqual("unicorn nuggets", error.ErrorMessage);
+            Assert.AreEqual((int) HttpStatusCode.BadRequest, error.StatusCode);
+            Assert.AreEqual("ArgumentException", error.StatusDescription);
+            Assert.AreEqual("ArgumentException", error.ErrorCode);
         }
 
         [Test]
-        public void Exceptions_thrown_are_received_by_client_when_AlwaysSendBasicAuthHeader_is_true()
+        public void html_clients_receive_redirect_to_login_page_when_accessing_unauthenticated()
         {
-            try
-            {
-                var client = (IRestClient)GetClientWithUserPassword();
-                ((ServiceClientBase)client).AlwaysSendBasicAuthHeader = true;
-                var response = client.Get<SecuredResponse>("/SecuredRequest");
-
-                Assert.Fail("Should have thrown");
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.ErrorMessage, Is.EqualTo("unicorn nuggets"));
-            }
-        }
-
-        [Test]
-        public void Html_clients_receive_redirect_to_login_page_when_accessing_unauthenticated()
-        {
-            var client = (ServiceClientBase)GetHtmlClient();
+            var client = (ServiceClientBase) GetHtmlClient();
             client.AllowAutoRedirect = false;
             string lastResponseLocationHeader = null;
-            client.ResponseFilter = response =>
-            {
-                lastResponseLocationHeader = response.Headers["Location"];
-            };
+            client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
-            var request = new SecuredRequest { Name = "test" };
+            var request = new SecuredRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
             client.Send<SecuredResponse>(request);
 
             var locationUri = new Uri(lastResponseLocationHeader);
@@ -438,17 +374,15 @@ namespace UnitTests
         }
 
         [Test]
-        public void Html_clients_receive_secured_url_attempt_in_login_page_redirect_query_string()
+        public void html_clients_receive_secured_url_attempt_in_login_page_redirect_query_string()
         {
-            var client = (ServiceClientBase)GetHtmlClient();
+            var client = (ServiceClientBase) GetHtmlClient();
             client.AllowAutoRedirect = false;
             string lastResponseLocationHeader = null;
-            client.ResponseFilter = response =>
-            {
-                lastResponseLocationHeader = response.Headers["Location"];
-            };
+            client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
-            var request = new SecuredRequest { Name = "test" };
+            var request = new SecuredRequest {Name = "test"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
             client.Send<SecuredResponse>(request);
 
             var locationUri = new Uri(lastResponseLocationHeader);
@@ -467,17 +401,14 @@ namespace UnitTests
         }
 
         [Test]
-        public void Html_clients_receive_secured_url_including_query_string_within_login_page_redirect_query_string()
+        public void html_clients_receive_secured_url_including_query_string_within_login_page_redirect_query_string()
         {
-            var client = (ServiceClientBase)GetHtmlClient();
+            var client = (ServiceClientBase) GetHtmlClient();
             client.AllowAutoRedirect = false;
             string lastResponseLocationHeader = null;
-            client.ResponseFilter = response =>
-            {
-                lastResponseLocationHeader = response.Headers["Location"];
-            };
+            client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
-            var request = new SecuredRequest { Name = "test" };
+            var request = new SecuredRequest {Name = "test"};
             // Perform a GET so that the Name DTO field is encoded as query string.
             client.Get(request);
 
@@ -494,15 +425,12 @@ namespace UnitTests
         }
 
         [Test]
-        public void Html_clients_receive_session_ReferrerUrl_on_successful_authentication()
+        public void html_clients_receive_session_ReferrerUrl_on_successful_authentication()
         {
-            var client = (ServiceClientBase)GetHtmlClient();
+            var client = (ServiceClientBase) GetHtmlClient();
             client.AllowAutoRedirect = false;
             string lastResponseLocationHeader = null;
-            client.ResponseFilter = response =>
-            {
-                lastResponseLocationHeader = response.Headers["Location"];
-            };
+            client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
             client.Send(new Authenticate
             {
@@ -516,7 +444,7 @@ namespace UnitTests
         }
 
         [Test]
-        public void Already_authenticated_session_returns_correct_username()
+        public void already_authenticated_session_returns_correct_username()
         {
             var client = GetClient();
 
@@ -528,13 +456,17 @@ namespace UnitTests
                 RememberMe = true,
             };
             var initialLoginResponse = client.Send(authRequest);
-            var alreadyLogggedInResponse = client.Send(authRequest);
+            Assert.IsFalse(initialLoginResponse.IsErrorResponse());
+            Assert.AreEqual(SystemConstants.UserName, initialLoginResponse.UserName);
 
-            Assert.That(alreadyLogggedInResponse.UserName, Is.EqualTo(SystemConstants.UserName));
+            var alreadyLogggedInResponse = client.Send(authRequest);
+            Assert.IsFalse(alreadyLogggedInResponse.IsErrorResponse());
+            Assert.AreEqual(SystemConstants.UserName, alreadyLogggedInResponse.UserName);
+            Assert.AreEqual(initialLoginResponse.SessionId, alreadyLogggedInResponse.SessionId);
         }
 
         [Test]
-        public void AuthResponse_returns_email_as_username_if_user_registered_with_email()
+        public void authResponse_returns_email_as_username_if_user_registered_with_email()
         {
             var client = GetClient();
 
@@ -551,7 +483,7 @@ namespace UnitTests
         }
 
         [Test]
-        public void Already_authenticated_session_returns_correct_username_when_user_registered_with_email()
+        public void already_authenticated_session_returns_correct_username_when_user_registered_with_email()
         {
             var client = GetClient();
 
@@ -570,197 +502,161 @@ namespace UnitTests
         }
 
         [Test]
-        public void Can_call_RequiresAnyRole_service_with_BasicAuth()
+        public void can_call_RequiresAnyRole_service_with_BasicAuth()
         {
-            try
-            {
-                var client = GetClientWithUserPassword();
-                var roles = new List<string>
-                {
-                    "test", "test2"
-                };
-                var request = new RequiresAnyRoleRequest { Roles = roles };
-                var response = client.Send<RequiresAnyRoleResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Roles));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            var client = GetClientWithUserPassword();
+            
+            var request = new RequiresAnyRoleRequest {RequestData = "some data"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<RequiresAnyRoleResponse>(request);
+            Assert.AreEqual(response.Result, request.RequestData);
         }
 
         [Test]
         public void RequiresAnyRole_service_returns_unauthorized_if_no_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                var roles = new List<string>
-                {
-                    "test", "test2"
-                };
-                var request = new RequiresAnyRoleRequest { Roles = roles };
-                var response = client.Send<RequiresAnyRoleRequest>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            var client = GetClient();
+           
+            var request = new RequiresAnyRoleRequest {RequestData = "some data"};
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresAnyRoleRequest>(request));
+
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
         public void RequiresAnyRole_service_returns_forbidden_if_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                ((ServiceClientBase)client).UserName = SystemConstants.EmailBasedUsername;
-                ((ServiceClientBase)client).Password = SystemConstants.PasswordForEmailBasedAccount;
+            var client = GetClient();
+            ((ServiceClientBase) client).UserName = SystemConstants.EmailBasedUsername;
+            ((ServiceClientBase) client).Password = SystemConstants.PasswordForEmailBasedAccount;
 
-                var roles = new List<string>
-                {
-                    "test", "test2"
-                };
-                var request = new RequiresAnyRoleRequest { Roles = roles };
-                var response = client.Send<RequiresAnyRoleResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Forbidden));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+           
+            var request = new RequiresAnyRoleRequest {RequestData = "some data"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresAnyRoleResponse>(request));
+            Assert.AreEqual((int) HttpStatusCode.Forbidden, error.StatusCode);
+            Assert.AreEqual("Invalid Role", error.StatusDescription);
+            Assert.AreEqual("Invalid Role", error.ErrorCode);
         }
 
         [Test]
-        public void Can_call_RequiresAnyPermission_service_with_BasicAuth()
+        public void can_call_RequiresAnyPermission_service_with_basic_auth()
         {
-            try
-            {
-                var client = GetClientWithUserPassword();
-                var permissions = new List<string>
-                {
-                    "test", "test2"
-                };
-                var request = new RequiresAnyPermissionRequest { Permissions = permissions };
-                var response = client.Send<RequiresAnyPermissionResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Permissions));
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.Fail(webEx.Message);
-            }
+            var client = GetClientWithUserPassword();
+            
+            var request = new RequiresAnyPermissionRequest {RequestData = "some data"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<RequiresAnyPermissionResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
         public void RequiresAnyPermission_service_returns_unauthorized_if_no_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                var permissions = new List<string>
-                {
-                    "test", "test2"
-                };
-                var request = new RequiresAnyPermissionRequest { Permissions = permissions };
-                var response = client.Send<RequiresAnyPermissionResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Unauthorized));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            var client = GetClient();
+            
+            var request = new RequiresAnyPermissionRequest {RequestData = "some data"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresAnyPermissionResponse>(request));
+
+            Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
+            Assert.AreEqual("Unauthorized", error.StatusDescription);
+            Assert.AreEqual("Unauthorized", error.ErrorCode);
         }
 
         [Test]
         public void RequiresAnyPermission_service_returns_forbidden_if_basic_auth_header_exists()
         {
-            try
-            {
-                var client = GetClient();
-                ((ServiceClientBase)client).UserName = SystemConstants.EmailBasedUsername;
-                ((ServiceClientBase)client).Password = SystemConstants.PasswordForEmailBasedAccount;
-                var permissions = new List<string>
-                {
-                    "test", "test2"
-                };
-                var request = new RequiresAnyPermissionRequest { Permissions = permissions };
-                var response = client.Send<RequiresAnyPermissionResponse>(request);
-                Assert.Fail();
-            }
-            catch (WebServiceException webEx)
-            {
-                Assert.That(webEx.StatusCode, Is.EqualTo((int)HttpStatusCode.Forbidden));
-                Console.WriteLine(webEx.ResponseDto.Dump());
-            }
+            var client = GetClient();
+
+            // This inserts the basic auth info
+            ((ServiceClientBase) client).UserName = SystemConstants.EmailBasedUsername;
+            ((ServiceClientBase) client).Password = SystemConstants.PasswordForEmailBasedAccount;
+
+           
+            var request = new RequiresAnyPermissionRequest {RequestData = "some data"};
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresAnyPermissionResponse>(request));
+
+            Assert.AreEqual((int) HttpStatusCode.Forbidden, error.StatusCode);
+            Assert.AreEqual("Invalid Permission", error.StatusDescription);
+            Assert.AreEqual("Invalid Permission", error.ErrorCode);
         }
 
         [Test]
-        public void Calling_AddSessionIdToRequest_from_a_custom_auth_attribute_does_not_duplicate_session_cookies()
+        public void calling_add_session_id_to_request_from_a_custom_auth_attribute_does_not_duplicate_session_cookies()
         {
             WebHeaderCollection headers = null;
             var client = GetClientWithUserPassword();
-            ((ServiceClientBase)client).AlwaysSendBasicAuthHeader = true;
-            ((ServiceClientBase)client).ResponseFilter = x => headers = x.Headers;
-            var response = client.Send<RequiresCustomAuthAttrResponse>(new RequiresCustomAuthAttrRequest { Name = "Hi You" });
+            ((ServiceClientBase) client).AlwaysSendBasicAuthHeader = true;
+            ((ServiceClientBase) client).ResponseFilter = x => headers = x.Headers;
+            // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
+            var response = client.Send<RequiresCustomAuthAttrResponse>(new RequiresCustomAuthAttrRequest {Name = "Hi You"});
             Assert.That(response.Result, Is.EqualTo("Hi You"));
             Assert.That(
                 Regex.Matches(headers["Set-Cookie"], "ss-id=").Count,
                 Is.EqualTo(1)
-            );
+                );
         }
 
-        [TestCase(ExpectedException = typeof(AuthenticationException), ExpectedMessage = "Authentication header not supported: Negotiate,NTLM")]
-        public void Meaningful_Exception_for_Unknown_Auth_Header()
-        {
 
+        [Test]
+        public void meaningful_exception_for_unknown_auth_header()
+        {
             //http://dotnetinside.com/en/type/ServiceStack.Client/AuthenticationInfo/4.0.20.0
             //http://en.wikipedia.org/wiki/Basic_access_authentication
 
-            var good = new AuthenticationInfo("Basic realm=registrar");
-            Assert.IsNotNull(good);
-        
-            // ReSharper disable once UnusedVariable - this assignment will thrown an error
-            var authInfo = new AuthenticationInfo("Negotiate,NTLM");
+            var good1 = new AuthenticationInfo("Basic realm=\"registrar\"");
+            Assert.IsNotNull(good1);
+
+            const string header = "Digest username=\"admin\"," +
+                                  "realm=\"The batcave\"," +
+                                  "nonce=\"49938e61ccaa\"," +
+                                  "uri=\"/\"," +
+                                  "response=\"98ccab4542f284c00a79b5957baaff23\"," +
+                                  "opaque=\"d8ea7aa61a1693024c4cc3a516f49b3c\"," +
+                                  "qop=auth, nc=00000001," +
+                                  "cnonce=\"8d1b34edb475994b\"";
+
+
+            var good2 = new AuthenticationInfo(header);
+            Assert.IsNotNull(good2);
+
+
+            var error = Assert.Throws<AuthenticationException>(() => new AuthenticationInfo("Negotiate,NTLM"));
+            Assert.AreEqual("Authentication header not supported: Negotiate,NTLM", error.Message);
         }
 
         [Test]
-        public void Can_logout_using_CredentailsAuth()
+        public void can_logout_using_CredentailsAuthProvider()
         {
             Assert.That(AuthenticateService.LogoutAction, Is.EqualTo("logout"));
 
-            try
+
+            var client = GetClient();
+
+            var authResponse = client.Send(new Authenticate
             {
-                var client = GetClient();
+                provider = CredentialsAuthProvider.Name,
+                UserName = "user",
+                Password = "p@55word",
+                RememberMe = true,
+            });
 
-                var authResponse = client.Send(new Authenticate
-                {
-                    provider = CredentialsAuthProvider.Name,
-                    UserName = "user",
-                    Password = "p@55word",
-                    RememberMe = true,
-                });
+            Assert.That(authResponse.SessionId, Is.Not.Null);
 
-                Assert.That(authResponse.SessionId, Is.Not.Null);
+            var logoutResponse = client.Get<AuthenticateResponse>("/auth/logout");
 
-                var logoutResponse = client.Get<AuthenticateResponse>("/auth/logout");
+            Assert.That(logoutResponse.ResponseStatus.ErrorCode, Is.Null);
 
-                Assert.That(logoutResponse.ResponseStatus.ErrorCode, Is.Null);
-
-                logoutResponse = client.Send(new Authenticate
-                {
-                    provider = AuthenticateService.LogoutAction,
-                });
-
-                Assert.That(logoutResponse.ResponseStatus.ErrorCode, Is.Null);
-            }
-            catch (WebServiceException webEx)
+            logoutResponse = client.Send(new Authenticate
             {
-                Assert.Fail(webEx.Message);
-            }
+                provider = AuthenticateService.LogoutAction,
+            });
+
+            Assert.That(logoutResponse.ResponseStatus.ErrorCode, Is.Null);
         }
     }
 }

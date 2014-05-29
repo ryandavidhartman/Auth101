@@ -8,7 +8,7 @@ namespace Auth_101.WebAPI.Services
     {
         public object Any(RequiresAnyRoleRequest request)
         {
-            return new RequiresAnyRoleResponse { Result = request.Roles };
+            return new RequiresAnyRoleResponse { Result = request.RequestData };
         }
     }
 }

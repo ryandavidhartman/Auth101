@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using ServiceStack;
+﻿using ServiceStack;
 
 
 namespace Auth_101.Model.Requests
@@ -7,11 +6,6 @@ namespace Auth_101.Model.Requests
     [Route("/RequiresAnyRoleRequest")]
     public class RequiresAnyRoleRequest : IReturn<RequiresAnyRoleResponse>
     {
-        public List<string> Roles { get; set; }
-
-        public RequiresAnyRoleRequest()
-        {
-            Roles = new List<string>();
-        }
+        public string RequestData { get; set; }
     }
 }
