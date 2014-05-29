@@ -77,9 +77,9 @@ namespace UnitTests
         public void no_credentials_throws_unauthorized()
         {
             var client = GetClient();
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            var error = Assert.Throws<WebServiceException>(() => client.Send<SecuredResponse>(request));
+            var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresAuthenticationResponse>(request));
 
             Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
             Assert.AreEqual("Unauthorized", error.StatusDescription);
@@ -103,7 +103,7 @@ namespace UnitTests
             Assert.IsFalse(authResponse.ResponseStatus.IsErrorResponse());
 
 
-            var request = new RequiresCustomAuthRequest {Name = "test"};
+            var request = new RequiresCustomAuthRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
             var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresCustomAuthResponse>(request));
 
@@ -158,10 +158,10 @@ namespace UnitTests
         public void does_work_with_BasicAuth()
         {
             var client = GetClientWithUserPassword();
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            var response = client.Send<SecuredResponse>(request);
-            Assert.That(response.Result, Is.EqualTo(request.Name));
+            var response = client.Send<RequiresAuthenticationResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
@@ -180,10 +180,10 @@ namespace UnitTests
                 Assert.IsTrue(hasAuthentication);
             };
 
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            var response = client.Send<SecuredResponse>(request);
-            Assert.That(response.Result, Is.EqualTo(request.Name));
+            var response = client.Send<RequiresAuthenticationResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
@@ -201,10 +201,10 @@ namespace UnitTests
 
             authResponse.PrintDump();
 
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            var response = client.Send<SecuredResponse>(request);
-            Assert.That(response.Result, Is.EqualTo(request.Name));
+            var response = client.Send<RequiresAuthenticationResponse>(request);
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
@@ -212,7 +212,7 @@ namespace UnitTests
         {
             var client = GetClient();
 
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             var authResponse = await client.SendAsync<AuthenticateResponse>(
                 new Authenticate
                 {
@@ -224,9 +224,9 @@ namespace UnitTests
 
             authResponse.PrintDump();
 
-            var response = await client.SendAsync<SecuredResponse>(request);
+            var response = await client.SendAsync<RequiresAuthenticationResponse>(request);
 
-            Assert.That(response.Result, Is.EqualTo(request.Name));
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
@@ -270,17 +270,17 @@ namespace UnitTests
         public void can_call_RequiredPermission_service_with_BasicAuth()
         {
             var client = GetClientWithUserPassword();
-            var request = new RequiresPermissionRequest {Name = "test"};
+            var request = new RequiresPermissionRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
             var response = client.Send<RequiresPermissionResponse>(request);
-            Assert.That(response.Result, Is.EqualTo(request.Name));
+            Assert.That(response.Result, Is.EqualTo(request.RequestData));
         }
 
         [Test]
         public void RequiredPermission_service_returns_unauthorized_if_no_basic_auth_header_exists()
         {
             var client = GetClient();
-            var request = new RequiresPermissionRequest {Name = "test"};
+            var request = new RequiresPermissionRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
             var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresPermissionResponse>(request));
             Assert.AreEqual((int) HttpStatusCode.Unauthorized, error.StatusCode);
@@ -295,7 +295,7 @@ namespace UnitTests
             ((ServiceClientBase) client).UserName = SystemConstants.EmailBasedUsername;
             ((ServiceClientBase) client).Password = SystemConstants.PasswordForEmailBasedAccount;
 
-            var request = new RequiresPermissionRequest {Name = "test"};
+            var request = new RequiresPermissionRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
             var error = Assert.Throws<WebServiceException>(() => client.Send<RequiresPermissionResponse>(request));
 
@@ -322,10 +322,10 @@ namespace UnitTests
 
             for (int i = 0; i < 500; i++)
             {
-                var request = new SecuredRequest {Name = "test"};
+                var request = new RequiresAuthenticationRequest {RequestData = "test"};
                 // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-                var response = client.Send<SecuredResponse>(request);
-                Assert.That(response.Result, Is.EqualTo(request.Name));
+                var response = client.Send<RequiresAuthenticationResponse>(request);
+                Assert.That(response.Result, Is.EqualTo(request.RequestData));
                 Console.WriteLine("loop : {0}", i);
             }
         }
@@ -335,7 +335,7 @@ namespace UnitTests
         {
             var client = (IRestClient) GetClientWithUserPassword();
             ((ServiceClientBase) client).AlwaysSendBasicAuthHeader = false;
-            var error = Assert.Throws<WebServiceException>(() => client.Get<SecuredResponse>("/SecuredRequest"));
+            var error = Assert.Throws<WebServiceException>(() => client.Get<RequiresAuthenticationResponse>("/RequiresAuthenticationRequest"));
 
             Assert.AreEqual("unicorn nuggets", error.ErrorMessage);
             Assert.AreEqual((int) HttpStatusCode.BadRequest, error.StatusCode);
@@ -348,7 +348,7 @@ namespace UnitTests
         {
             var client = (IRestClient) GetClientWithUserPassword();
             ((ServiceClientBase) client).AlwaysSendBasicAuthHeader = true;
-            var error = Assert.Throws<WebServiceException>(() => client.Get<SecuredResponse>("/SecuredRequest"));
+            var error = Assert.Throws<WebServiceException>(() => client.Get<RequiresAuthenticationResponse>("/RequiresAuthenticationRequest"));
 
             Assert.AreEqual("unicorn nuggets", error.ErrorMessage);
             Assert.AreEqual((int) HttpStatusCode.BadRequest, error.StatusCode);
@@ -362,11 +362,12 @@ namespace UnitTests
             var client = (ServiceClientBase) GetHtmlClient();
             client.AllowAutoRedirect = false;
             string lastResponseLocationHeader = null;
+            
             client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            client.Send<SecuredResponse>(request);
+            client.Send<RequiresAuthenticationResponse>(request);
 
             var locationUri = new Uri(lastResponseLocationHeader);
             var loginPath = "/".CombineWith(VirtualDirectory).CombineWith(SystemConstants.LoginUrl);
@@ -381,9 +382,9 @@ namespace UnitTests
             string lastResponseLocationHeader = null;
             client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            client.Send<SecuredResponse>(request);
+            client.Send<RequiresAuthenticationResponse>(request);
 
             var locationUri = new Uri(lastResponseLocationHeader);
             var queryString = HttpUtility.ParseQueryString(locationUri.Query);
@@ -391,7 +392,7 @@ namespace UnitTests
             var redirectUri = new Uri(redirectQueryString);
 
             // Should contain the url attempted to access before the redirect to the login page.
-            var securedPath = "/".CombineWith(VirtualDirectory).CombineWith("securedrequest");
+            var securedPath = "/".CombineWith(VirtualDirectory).CombineWith("requiresauthenticationrequest");
             Assert.That(redirectUri.AbsolutePath, Is.EqualTo(securedPath).IgnoreCase);
             // The url should also obey the WebHostUrl setting for the domain.
             var redirectSchemeAndHost = redirectUri.Scheme + "://" + redirectUri.Authority;
@@ -408,7 +409,7 @@ namespace UnitTests
             string lastResponseLocationHeader = null;
             client.ResponseFilter = response => { lastResponseLocationHeader = response.Headers["Location"]; };
 
-            var request = new SecuredRequest {Name = "test"};
+            var request = new RequiresAuthenticationRequest {RequestData = "test"};
             // Perform a GET so that the Name DTO field is encoded as query string.
             client.Get(request);
 
@@ -420,8 +421,8 @@ namespace UnitTests
             // Should contain the url attempted to access before the redirect to the login page,
             // including the 'Name=test' query string.
             var redirectUriQueryString = HttpUtility.ParseQueryString(redirectUri.Query);
-            Assert.That(redirectUriQueryString.AllKeys, Contains.Item("name"));
-            Assert.That(redirectUriQueryString["name"], Is.EqualTo("test"));
+            Assert.That(redirectUriQueryString.AllKeys, Contains.Item("requestData"));
+            Assert.AreEqual("test", redirectUriQueryString["requestData"]);
         }
 
         [Test]
@@ -593,7 +594,7 @@ namespace UnitTests
             ((ServiceClientBase) client).AlwaysSendBasicAuthHeader = true;
             ((ServiceClientBase) client).ResponseFilter = x => headers = x.Headers;
             // ReSharper disable once RedundantTypeArgumentsOfMethod  (Parameter type added for clarity only)
-            var response = client.Send<RequiresCustomAuthAttrResponse>(new RequiresCustomAuthAttrRequest {Name = "Hi You"});
+            var response = client.Send<RequiresCustomAuthAttrResponse>(new RequiresCustomAuthAttrRequest {RequestData = "Hi You"});
             Assert.That(response.Result, Is.EqualTo("Hi You"));
             Assert.That(
                 Regex.Matches(headers["Set-Cookie"], "ss-id=").Count,

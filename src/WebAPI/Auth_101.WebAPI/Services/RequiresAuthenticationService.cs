@@ -6,14 +6,14 @@ using ServiceStack;
 namespace Auth_101.WebAPI.Services
 {
     [Authenticate]
-    public class SecuredService : Service
+    public class RequiresAuthenticationService : Service
     {
-        public object Post(SecuredRequest request)
+        public object Post(RequiresAuthenticationRequest request)
         {
-            return new SecuredResponse { Result = request.Name };
+            return new RequiresAuthenticationResponse { Result = request.RequestData };
         }
 
-        public object Get(SecuredRequest request)
+        public object Get(RequiresAuthenticationRequest request)
         {
             throw new ArgumentException("unicorn nuggets");
         }

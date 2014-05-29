@@ -156,7 +156,7 @@
     <Compile Include="Services\RequiresCustomAuthService.cs" />
     <Compile Include="Services\RequiresPermissionService.cs" />
     <Compile Include="Services\RequiresRoleService.cs" />
-    <Compile Include="Services\SecuredService.cs" />
+    <Compile Include="Services\RequiresAuthenticationService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Model\Auth_101.Model\Auth_101.Model.csproj">

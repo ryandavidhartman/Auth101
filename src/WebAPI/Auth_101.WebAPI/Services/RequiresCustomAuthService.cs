@@ -8,7 +8,7 @@ namespace Auth_101.WebAPI.Services
     {
         public RequiresCustomAuthResponse Any(RequiresCustomAuthRequest request)
         {
-            return new RequiresCustomAuthResponse { Result = request.Name };
+            return new RequiresCustomAuthResponse { Result = request.RequestData };
         }
     }
 }

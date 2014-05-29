@@ -109,8 +109,8 @@
     <Compile Include="Operations\PutCustomer.cs" />
     <Compile Include="Requests\SecuredFileUploadResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Requests\RequiredRoleRequest.cs" />
-    <Compile Include="Requests\RequiredRoleResponse.cs" />
+    <Compile Include="Requests\RequiresRoleRequest.cs" />
+    <Compile Include="Requests\RequiresRoleResponse.cs" />
     <Compile Include="Requests\RequiresAnyPermissionResponse.cs" />
     <Compile Include="Requests\RequiresAnyPermissionRequest.cs" />
     <Compile Include="Requests\RequiresAnyRoleRequest.cs" />
@@ -122,8 +122,8 @@
     <Compile Include="Requests\RequiresPermissionRequest.cs" />
     <Compile Include="Requests\RequiresPermissionResponse.cs" />
     <Compile Include="Requests\SecuredFileUploadRequest.cs" />
-    <Compile Include="Requests\SecuredRequest.cs" />
-    <Compile Include="Requests\SecuredResponse.cs" />
+    <Compile Include="Requests\RequiresAuthenticationRequest.cs" />
+    <Compile Include="Requests\RequiresAuthenticationResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -8,7 +8,7 @@ namespace Auth_101.WebAPI.Services
     {
         public RequiresPermissionResponse Any(RequiresPermissionRequest request)
         {
-            return new RequiresPermissionResponse { Result = request.Name };
+            return new RequiresPermissionResponse { Result = request.RequestData };
         }
     }
 }
