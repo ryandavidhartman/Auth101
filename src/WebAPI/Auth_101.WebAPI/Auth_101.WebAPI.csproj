@@ -74,43 +74,43 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack">
-      <HintPath>..\..\..\packages\ServiceStack.4.0.19\lib\net40\ServiceStack.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.4.0.21\lib\net40\ServiceStack.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Client">
-      <HintPath>..\..\..\packages\ServiceStack.Client.4.0.19\lib\net40\ServiceStack.Client.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Client.4.0.21\lib\net40\ServiceStack.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Common">
-      <HintPath>..\..\..\packages\ServiceStack.Common.4.0.19\lib\net40\ServiceStack.Common.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Common.4.0.21\lib\net40\ServiceStack.Common.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Interfaces">
-      <HintPath>..\..\..\packages\ServiceStack.Interfaces.4.0.19\lib\net40\ServiceStack.Interfaces.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Interfaces.4.0.21\lib\net40\ServiceStack.Interfaces.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Logging.Log4Net">
-      <HintPath>..\..\..\packages\ServiceStack.Logging.Log4Net.4.0.19\lib\net40\ServiceStack.Logging.Log4Net.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Logging.Log4Net.4.0.21\lib\net40\ServiceStack.Logging.Log4Net.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.OrmLite">
-      <HintPath>..\..\..\packages\ServiceStack.OrmLite.4.0.19\lib\net40\ServiceStack.OrmLite.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.OrmLite.4.0.21\lib\net40\ServiceStack.OrmLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.OrmLite.SqlServer">
-      <HintPath>..\..\..\packages\ServiceStack.OrmLite.SqlServer.4.0.19\lib\net40\ServiceStack.OrmLite.SqlServer.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.OrmLite.SqlServer.4.0.21\lib\net40\ServiceStack.OrmLite.SqlServer.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Redis">
-      <HintPath>..\..\..\packages\ServiceStack.Redis.4.0.19\lib\net40\ServiceStack.Redis.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Redis.4.0.21\lib\net40\ServiceStack.Redis.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Server">
-      <HintPath>..\..\..\packages\ServiceStack.Server.4.0.19\lib\net40\ServiceStack.Server.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Server.4.0.21\lib\net40\ServiceStack.Server.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Text">
-      <HintPath>..\..\..\packages\ServiceStack.Text.4.0.19\lib\net40\ServiceStack.Text.dll</HintPath>
+      <HintPath>..\..\..\packages\ServiceStack.Text.4.0.21\lib\net40\ServiceStack.Text.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.DynamicData" />
